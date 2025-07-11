@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PuckSwap(v2.5) - Cardano AMM DEX</title>
+    <link rel="icon" href="pucky.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888;
+            --border-color: #333;
+            --accent-color: #888888;
+            /* Windows 98 colors */
+            --win98-gray: #C0C0C0;
+            --win98-dark-gray: #808080;
+            --win98-light-gray: #DFDFDF;
+            --win98-white: #FFFFFF;
+            --win98-black: #000000;
+            --win98-blue: #000080;
+            --win98-title-blue: #1084d0;
+        }
+
+        body.light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #000000;
+            --text-secondary: #666;
+            --border-color: #ccc;
+            --accent-color: #666666;
+        }
+
+        @font-face {
+            font-family: 'DejaVu Sans Mono';
+            src: url('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSansMono.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: 'Space Mono', 'MS Sans Serif', 'Geneva', 'SF Mono', Monaco, 'Cascadia Mono', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .terminal-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .terminal-header {
+            background: var(--bg-tertiary);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .terminal-title {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            flex-direction: row;
+        }
+
+        .terminal-title-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .logo-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            border: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .logo-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .logo-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .terminal-title h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin: 0;
+            font-family: 'DejaVu Sans Mono', 'Space Mono', monospace;
+        }
+
+        .terminal-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .terminal-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+
+        .status-dot.offline {
+            background: #ff0000;
+        }
+
+        .wallet-balance {
+            color: var(--accent-color);
+            font-size: 12px;
+        }
+
+        .wallet-info {
+            position: relative;
+        }
+
+        .wallet-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .wallet-dropdown-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .wallet-dropdown-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .wallet-dropdown-content {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            margin-top: 5px;
+            min-width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .wallet-asset-list {
+            padding: 10px;
+        }
+
+        .wallet-asset-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .wallet-asset-item:last-child {
+            border-bottom: none;
+        }
+
+        .wallet-asset-name {
+            color: var(--text-secondary);
+        }
+
+        .wallet-asset-amount {
+            color: var(--accent-color);
+        }
+
+        .tab-container {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--text-primary);
+        }
+
+        .terminal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .swap-interface {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .swap-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .swap-header h2 {
+            font-size: 18px;
+            font-weight: normal;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .swap-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Terminal-style swap box */
+        .swap-box {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-color);
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            font-family: 'Space Mono', 'Courier New', monospace;
+        }
+
+        .swap-box::before {
+            content: '> SWAP_INTERFACE';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-secondary);
+            padding: 0 5px;
+            color: var(--accent-color);
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        body.light-mode .swap-box {
+            background: #f9f9f9;
+            border-color: #666;
+        }
+
+        body.light-mode .swap-box::before {
+            background: #f9f9f9;
+            color: #666;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Space Mono', 'Courier New', monospace;
+        }
+
+        .input-container:focus-within {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 1px var(--accent-color);
+        }
+
+        .amount-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .amount-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .token-selector {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .token-selector:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .token-selector select {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .token-selector select option {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .swap-arrow {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .swap-arrow-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .swap-arrow-btn:hover {
+            border-color: var(--text-secondary);
+            color: var(--accent-color);
+            transform: rotate(180deg);
+        }
+
+        .swap-details {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            font-family: 'Space Mono', 'Courier New', monospace;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .detail-row .value {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .swap-button {
+            width: 100%;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 2px solid var(--accent-color);
+            padding: 12px;
+            font-size: 14px;
+            font-family: 'Space Mono', 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .swap-button::before {
+            content: '>';
+            position: absolute;
+            left: 15px;
+            color: var(--accent-color);
+        }
+
+        .swap-button:hover:not(:disabled) {
+            background: var(--accent-color);
+            color: var(--bg-tertiary);
+        }
+
+        .swap-button:disabled {
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .connect-wallet-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .connect-wallet-btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border: 1px solid;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .error-message {
+            color: #ff0000;
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .success-message {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .liquidity-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 0;
+        }
+
+        /* Liquidity box with terminal style */
+        .pool-info {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            font-family: 'Space Mono', 'Courier New', monospace;
+        }
+
+        .pool-info::before {
+            content: '> LIQUIDITY_POOL';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-secondary);
+            padding: 0 5px;
+            color: var(--accent-color);
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .pool-info h3 {
+            font-size: 16px;
+            font-weight: normal;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pool-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            color: var(--accent-color);
+        }
+
+        /* Windows 98 style for About section */
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 0;
+        }
+
+        .win98-window {
+            background: var(--win98-gray);
+            border: 2px solid var(--win98-black);
+            box-shadow: 
+                inset -2px -2px 0 var(--win98-dark-gray),
+                inset 2px 2px 0 var(--win98-white),
+                0 0 0 2px var(--win98-black);
+            padding: 4px;
+            margin: 20px auto;
+            max-width: 600px;
+            font-family: 'Space Mono', 'MS Sans Serif', 'Geneva', sans-serif;
+            color: var(--win98-black);
+        }
+
+        .win98-title-bar {
+            background: linear-gradient(to right, var(--win98-blue), var(--win98-title-blue));
+            color: var(--win98-white);
+            padding: 2px 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .win98-title {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .win98-controls {
+            display: flex;
+            gap: 2px;
+        }
+
+        .win98-control-btn {
+            width: 16px;
+            height: 14px;
+            background: var(--win98-gray);
+            border: 1px solid var(--win98-black);
+            box-shadow: 
+                inset -1px -1px 0 var(--win98-dark-gray),
+                inset 1px 1px 0 var(--win98-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            color: var(--win98-black);
+        }
+
+        .win98-control-btn:active {
+            box-shadow: 
+                inset 1px 1px 0 var(--win98-dark-gray),
+                inset -1px -1px 0 var(--win98-white);
+        }
+
+        .win98-content {
+            background: var(--win98-white);
+            border: 2px solid;
+            border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+            padding: 20px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--win98-black);
+        }
+
+        .win98-content h3 {
+            font-size: 13px;
+            font-weight: bold;
+            margin: 16px 0 8px 0;
+            color: var(--win98-black);
+            text-decoration: underline;
+        }
+
+        .win98-content p {
+            margin-bottom: 12px;
+            color: var(--win98-black);
+        }
+
+        .win98-info-box {
+            background: #E0E0E0;
+            border: 1px solid;
+            border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+            padding: 12px;
+            margin: 12px 0;
+            color: var(--win98-black);
+        }
+
+        .win98-info-box strong {
+            color: var(--win98-blue);
+        }
+
+        .win98-status-bar {
+            background: var(--win98-gray);
+            border-top: 2px solid var(--win98-white);
+            padding: 4px 8px;
+            font-size: 11px;
+            display: flex;
+            gap: 20px;
+            margin-top: 2px;
+            color: var(--win98-black);
+        }
+
+        .win98-status-item {
+            border: 1px solid;
+            border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+            padding: 2px 8px;
+            background: var(--win98-gray);
+        }
+
+        /* Windows 98 style for puck.fun section */
+        .puck-fun-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .puck-fun-content h2 {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        .puck-fun-content p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .win98-button {
+            background: var(--win98-gray);
+            border: 2px solid;
+            border-color: var(--win98-white) var(--win98-dark-gray) var(--win98-dark-gray) var(--win98-white);
+            box-shadow: 
+                inset -1px -1px 0 var(--win98-black),
+                inset 1px 1px 0 var(--win98-light-gray);
+            padding: 10px 30px;
+            font-family: 'Space Mono', 'MS Sans Serif', 'Geneva', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--win98-black);
+            cursor: pointer;
+            transition: all 0.1s;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .win98-button:hover {
+            background: #D0D0D0;
+        }
+
+        .win98-button:active {
+            border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+            box-shadow: 
+                inset 1px 1px 0 var(--win98-black),
+                inset -1px -1px 0 var(--win98-light-gray);
+            padding: 11px 29px 9px 31px;
+        }
+
+        /* Calculator button styles */
+        .calc-btn {
+            background: var(--win98-gray);
+            border: 2px solid;
+            border-color: var(--win98-white) var(--win98-dark-gray) var(--win98-dark-gray) var(--win98-white);
+            box-shadow: 
+                inset -1px -1px 0 var(--win98-black),
+                inset 1px 1px 0 var(--win98-light-gray);
+            padding: 10px;
+            font-family: 'DejaVu Sans Mono', 'Space Mono', 'MS Sans Serif', sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--win98-black);
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .calc-btn:hover {
+            background: #D0D0D0;
+        }
+
+        .calc-btn:active {
+            border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+            box-shadow: 
+                inset 1px 1px 0 var(--win98-black),
+                inset -1px -1px 0 var(--win98-light-gray);
+        }
+
+        /* Footer styles */
+        .terminal-footer {
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .footer-copyright {
+            font-family: 'DejaVu Sans Mono', 'Space Mono', monospace;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-link:hover {
+            opacity: 1;
+        }
+
+        .footer-link img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        /* Footer link SVG colors - white for better visibility */
+        .footer-link svg {
+            filter: none;
+        }
+
+        /* Footer right section */
+        .footer-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .footer-network {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-color);
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+        }
+
+        .footer-clock {
+            color: var(--text-secondary);
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+        }
+
+        /* Text bubbles */
+        .text-bubble {
+            position: absolute;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: scale(0) translateY(20px);
+            animation: bubblePopIn 0.5s ease-out forwards;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .text-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--border-color);
+        }
+
+        @keyframes bubblePopIn {
+            0% {
+                opacity: 0;
+                transform: scale(0) translateY(20px);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.1) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes bubbleFadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.8) translateY(-20px);
+            }
+        }
+
+        .bubble-container {
+            position: relative;
+            min-height: 300px;
+            margin-top: 40px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <div class="logo-toggle" id="logoToggle" onclick="toggleTheme()">
+                    <img id="logoImage" src="pucky.jpg" alt="PuckSwap Logo">
+                </div>
+                <div class="terminal-title-text">
+                    <h1>PuckSwap(v2.5)</h1>
+                    <span class="terminal-subtitle">Cardano AMM DEX (testnet) and Image Enhancement Protocol</span>
+                </div>
+            </div>
+            <div class="terminal-status">
+                <div class="status-item">
+                    <span class="status-dot" id="connectionDot"></span>
+                    <span id="connectionStatus">Offline</span>
+                </div>
+                <div class="status-item wallet-info" id="walletInfo" style="display: none;">
+                    <div class="wallet-dropdown">
+                        <span class="wallet-balance" id="walletBalance">0.00 ADA</span>
+                        <button class="wallet-dropdown-btn" onclick="toggleWalletDropdown()">▼</button>
+                    </div>
+                    <div class="wallet-dropdown-content" id="walletDropdown" style="display: none;">
+                        <div class="wallet-asset-list" id="walletAssets">
+                            <!-- Assets will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <button class="connect-wallet-btn" id="connectBtn" onclick="connectWallet()">
+                        Connect Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab active" onclick="switchTab('swap')">Swap</button>
+            <button class="tab" onclick="switchTab('liquidity')">Liquidity</button>
+            <button class="tab" onclick="switchTab('puckfun')">puck.fun</button>
+            <button class="tab" onclick="switchTab('calculator')">Calculator</button>
+            <button class="tab" onclick="switchTab('about')">About</button>
+        </div>
+
+        <div class="terminal-body">
+
+            <!-- Swap Tab Content -->
+            <div id="swapTab" class="tab-content active">
+                <div class="swap-interface">
+                    <div class="swap-header">
+                        <h2>Swap</h2>
+                        <p class="swap-subtitle">Trade tokens instantly</p>
+                    </div>
+
+                    <div class="swap-box">
+                        <div class="input-group">
+                            <label class="input-label">From</label>
+                            <div class="input-container">
+                                <input type="number" 
+                                       class="amount-input" 
+                                       id="fromAmount" 
+                                       placeholder="0.0"
+                                       oninput="calculateSwap()">
+                                <div class="token-selector">
+                                    <select id="fromToken" onchange="handleTokenChange()">
+                                        <option value="ADA">ADA</option>
+                                        <option value="tPucky">tPUCKY</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="swap-arrow">
+                            <button class="swap-arrow-btn" onclick="reverseTokens()">⇅</button>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label">To</label>
+                            <div class="input-container">
+                                <input type="number" 
+                                       class="amount-input" 
+                                       id="toAmount" 
+                                       placeholder="0.0"
+                                       readonly>
+                                <div class="token-selector">
+                                    <select id="toToken" onchange="handleTokenChange()">
+                                        <option value="tPucky">tPUCKY</option>
+                                        <option value="ADA">ADA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swap-details" id="swapInfo" style="display: none;">
+                        <div class="detail-row">
+                            <span>Exchange Rate</span>
+                            <span class="value" id="exchangeRate">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Price Impact</span>
+                            <span class="value" id="priceImpact">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Batcher Fee</span>
+                            <span class="value">2 ADA</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Slippage Tolerance</span>
+                            <span class="value">0.5%</span>
+                        </div>
+                    </div>
+
+                    <button class="swap-button" id="swapBtn" onclick="executeSwap()" disabled>
+                        Enter an amount
+                    </button>
+
+                    <div id="message"></div>
+                </div>
+            </div>
+
+            <!-- Liquidity Tab Content -->
+            <div id="liquidityTab" class="tab-content">
+                <div class="liquidity-content">
+                    <div class="pool-info">
+                        <h3>ADA/tPUCKY Pool Status</h3>
+                        <div class="pool-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">Total Value Locked</div>
+                                <div class="stat-value" id="tvlValue">$0.00</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">ADA Reserve</div>
+                                <div class="stat-value" id="adaReserve">0 ADA</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">tPucky Reserve</div>
+                                <div class="stat-value" id="tPuckyReserve">0 tPUCKY</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Exchange Rate</div>
+                                <div class="stat-value" id="poolRate">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="poolAlert" style="display: none;">
+                        <div class="message error-message">
+                            No liquidity pool found. Create the initial ADA-tPucky pool to start trading.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- puck.fun Tab Content -->
+            <div id="puckfunTab" class="tab-content">
+                <div class="puck-fun-content">
+                    <div class="win98-window">
+                        <div class="win98-title-bar">
+                            <div class="win98-title">
+                                <span>🖼️</span>
+                                <span>ENHANCE.EXE</span>
+                            </div>
+                            <div class="win98-controls">
+                                <div class="win98-control-btn">_</div>
+                                <div class="win98-control-btn">□</div>
+                                <div class="win98-control-btn">✕</div>
+                            </div>
+                        </div>
+                        
+                        <div class="win98-content" style="text-align: center; padding: 15px;">
+                            <p style="margin-bottom: 15px;">Press the button. Get pucky.</p>
+                            
+                            <button class="win98-button" id="puckButton" onclick="pressPuck()">
+                                Enhance
+                            </button>
+                        </div>
+                        
+                        <div class="win98-status-bar">
+                            <div class="win98-status-item">Ready</div>
+                            <div class="win98-status-item">Enhancement Protocol Active</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bubble-container" id="bubbleContainer" style="margin-top: 40px; min-height: 300px; position: relative;">
+                        <img src="happypuckv2.PNG" alt="Happy Puck" style="
+                            display: block;
+                            margin: 20px auto;
+                            max-width: 250px;
+                            width: 100%;
+                            height: auto;
+                        ">
+                        <!-- Text bubbles will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculator Tab Content -->
+            <div id="calculatorTab" class="tab-content">
+                <div class="calculator-content" style="max-width: 400px; margin: 0 auto; padding: 40px 0;">
+                    <div class="win98-window">
+                        <div class="win98-title-bar">
+                            <div class="win98-title">
+                                <span>🔢</span>
+                                <span>CALCULATOR.EXE</span>
+                            </div>
+                            <div class="win98-controls">
+                                <div class="win98-control-btn">_</div>
+                                <div class="win98-control-btn">□</div>
+                                <div class="win98-control-btn">✕</div>
+                            </div>
+                        </div>
+                        
+                        <div class="win98-content" style="padding: 10px;">
+                            <div class="calc-display" style="
+                                background: #e8f5e8;
+                                border: 2px solid;
+                                border-color: var(--win98-dark-gray) var(--win98-white) var(--win98-white) var(--win98-dark-gray);
+                                padding: 10px;
+                                text-align: right;
+                                font-size: 20px;
+                                font-family: 'DejaVu Sans Mono', 'Space Mono', monospace;
+                                margin-bottom: 10px;
+                                min-height: 40px;
+                                color: #000;
+                                overflow: hidden;
+                            " id="calcDisplay">0</div>
+                            
+                            <div class="calc-buttons" style="
+                                display: grid;
+                                grid-template-columns: repeat(4, 1fr);
+                                gap: 5px;
+                            ">
+                                <button class="calc-btn" onclick="clearCalc()" style="grid-column: span 2;">C</button>
+                                <button class="calc-btn" onclick="deleteLastCalc()">←</button>
+                                <button class="calc-btn" onclick="appendCalc('/')">÷</button>
+                                
+                                <button class="calc-btn" onclick="appendCalc('7')">7</button>
+                                <button class="calc-btn" onclick="appendCalc('8')">8</button>
+                                <button class="calc-btn" onclick="appendCalc('9')">9</button>
+                                <button class="calc-btn" onclick="appendCalc('*')">×</button>
+                                
+                                <button class="calc-btn" onclick="appendCalc('4')">4</button>
+                                <button class="calc-btn" onclick="appendCalc('5')">5</button>
+                                <button class="calc-btn" onclick="appendCalc('6')">6</button>
+                                <button class="calc-btn" onclick="appendCalc('-')">−</button>
+                                
+                                <button class="calc-btn" onclick="appendCalc('1')">1</button>
+                                <button class="calc-btn" onclick="appendCalc('2')">2</button>
+                                <button class="calc-btn" onclick="appendCalc('3')">3</button>
+                                <button class="calc-btn" onclick="appendCalc('+')">+</button>
+                                
+                                <button class="calc-btn" onclick="appendCalc('0')" style="grid-column: span 2;">0</button>
+                                <button class="calc-btn" onclick="appendCalc('.')">.</button>
+                                <button class="calc-btn" onclick="calculateResult()">=</button>
+                            </div>
+                        </div>
+                        
+                        <div class="win98-status-bar">
+                            <div class="win98-status-item">Ready</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Tab Content -->
+            <div id="aboutTab" class="tab-content">
+                <div class="about-content">
+                    <div class="win98-window">
+                        <div class="win98-title-bar">
+                            <div class="win98-title">
+                                <span>ℹ️</span>
+                                <span>PUCKSWAP.EXE - About</span>
+                            </div>
+                            <div class="win98-controls">
+                                <div class="win98-control-btn">_</div>
+                                <div class="win98-control-btn">□</div>
+                                <div class="win98-control-btn">✕</div>
+                            </div>
+                        </div>
+                        
+                        <div class="win98-content">
+                            <h3>SYSTEM INFORMATION</h3>
+                            <div class="win98-info-box">
+                                <strong>Program:</strong> PuckSwap(v2.5)<br>
+                                <strong>Type:</strong> Experimental AMM DEX (Testnet)<br>
+                                <strong>Purpose:</strong> Designed to enhance the image<br>
+                                <strong>Status:</strong> EXPERIMENTAL - TESTNET ONLY
+                            </div>
+                            
+                            <h3>TECHNICAL SPECIFICATIONS</h3>
+                            <p>
+                                Network: Cardano Preprod Testnet<br>
+                                Trading Fee: 0.3%<br>
+                                Batcher Fee: 2 ADA<br>
+                                Pool Type: Constant Product (x*y=k)
+                            </p>
+                            
+                            <h3>IMAGE ENHANCEMENT PROTOCOL</h3>
+                            <p>
+                                PuckSwap is an experimental AMM DEX (testnet)<br>
+                                built on Cardano designed to enhance the image.<br>
+                                Augmented with AI.<br>
+                                $PUCKY is just a memecoin.
+                            </p>
+                            
+                            <div class="win98-info-box">
+                                <strong>NOTICE:</strong> This is experimental software.<br>
+                                Do not use real funds. Test environment only.<br>
+                                No warranties expressed or implied.
+                            </div>
+                        </div>
+                        
+                        <div class="win98-status-bar">
+                            <div class="win98-status-item">Ready</div>
+                            <div class="win98-status-item">Testnet Mode</div>
+                            <div class="win98-status-item">v2.5.0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-footer">
+            <div class="footer-copyright">
+                © 2025 PuckSwap
+            </div>
+            <div class="footer-right">
+                <div class="footer-links">
+                    <a href="https://github.com" target="_blank" class="footer-link" title="GitHub">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                    <a href="https://x.com/puckydev" target="_blank" class="footer-link" title="X (Twitter)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                    <a href="https://PuckHub.io" target="_blank" class="footer-link" title="PuckHub">
+                        <img src="pucky.jpg" alt="PuckHub">
+                    </a>
+                </div>
+                <div class="footer-network">
+                    <span class="status-dot"></span>
+                    <span>Network: Preprod</span>
+                </div>
+                <div class="footer-clock" id="utcClock">00:00:00 UTC</div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script type="module">
+        // Import Lucid and other dependencies
+        import { Lucid, Blockfrost } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
+        
+        // Make functions available globally
+        window.lucid = null;
+        window.walletApi = null;
+        window.poolUtxo = null;
+        window.Lucid = Lucid;
+        window.Blockfrost = Blockfrost;
+        
+        // Tab switching function
+        window.switchTab = (tabName) => {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        };
+        
+        // Initialize
+        window.onload = async () => {
+            try {
+                window.lucid = await window.Lucid.new(
+                    new window.Blockfrost(
+                        'https://cardano-preprod.blockfrost.io/api/v0',
+                        'preprodd86p4euUeF6yIUbwl03sJJMD03aICMxL'
+                    ),
+                    'Preprod'
+                );
+                
+                // Check for pool existence
+                await checkPoolStatus();
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        };
+        
+        window.connectWallet = async () => {
+            const btn = document.getElementById('connectBtn');
+            const statusDot = document.getElementById('connectionDot');
+            const statusText = document.getElementById('connectionStatus');
+            const walletInfo = document.getElementById('walletInfo');
+            
+            // Check if already connected (disconnect functionality)
+            if (window.walletApi && btn.textContent === 'Disconnect') {
+                // Play logoff sound
+                playSound(logoffSound);
+                
+                // Disconnect wallet
+                window.walletApi = null;
+                window.lucid = null;
+                
+                // Reset UI
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Offline';
+                btn.textContent = 'Connect Wallet';
+                walletInfo.style.display = 'none';
+                
+                // Reset swap button
+                document.getElementById('swapBtn').textContent = 'Connect Wallet';
+                document.getElementById('swapBtn').disabled = true;
+                
+                // Clear balances
+                document.getElementById('walletBalance').textContent = '0.00 ADA';
+                document.getElementById('walletAssets').innerHTML = '';
+                
+                return;
+            }
+            
+            try {
+                btn.innerHTML = '<span class="loading"></span>';
+                
+                // Ensure Lucid is initialized
+                if (!window.lucid) {
+                    console.log('Lucid not initialized, initializing now...');
+                    window.lucid = await window.Lucid.new(
+                        new window.Blockfrost(
+                            'https://cardano-preprod.blockfrost.io/api/v0',
+                            'preprodd86p4euUeF6yIUbwl03sJJMD03aICMxL'
+                        ),
+                        'Preprod'
+                    );
+                }
+                
+                // Check for available wallets
+                const availableWallets = [];
+                if (window.cardano) {
+                    // Map wallet APIs to their image files
+                    const walletImages = {
+                        vespr: 'Wallets/VESPR.jpg',
+                        eternl: 'Wallets/Eternl.jpg',
+                        lace: 'Wallets/Lace.jpg',
+                        begin: 'Wallets/Begin Wallet.jpg',
+                        yoroi: 'Wallets/Yoroi.png'
+                    };
+                    
+                    if (window.cardano.nami) availableWallets.push({ name: 'Nami', api: 'nami', icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4LjYyNzQgMjQgMjQgMTguNjI3NCAyNCAxMkMyNCA1LjM3MjU4IDE4LjYyNzQgMCAxMiAwQzUuMzcyNTggMCAwIDUuMzcyNTggMCAxMkMwIDE4LjYyNzQgNS4zNzI1OCAyNCAxMiAyNFoiIGZpbGw9IiMzNDlFQTMiLz4KPHBhdGggZD0iTTggOEgxNlYxNkg4VjhaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4=' });
+                    if (window.cardano.vespr) availableWallets.push({ name: 'VESPR', api: 'vespr', icon: walletImages.vespr });
+                    if (window.cardano.eternl) availableWallets.push({ name: 'Eternl', api: 'eternl', icon: walletImages.eternl });
+                    if (window.cardano.lace) availableWallets.push({ name: 'Lace', api: 'lace', icon: walletImages.lace });
+                    if (window.cardano.begin) availableWallets.push({ name: 'Begin', api: 'begin', icon: walletImages.begin });
+                    if (window.cardano.flint) availableWallets.push({ name: 'Flint', api: 'flint', icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNGRjY3MDAiLz4KPHBhdGggZD0iTTEyIDZMOSAxMkwxMiAxOEwxNSAxMkwxMiA2WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+' });
+                    if (window.cardano.yoroi) availableWallets.push({ name: 'Yoroi', api: 'yoroi', icon: walletImages.yoroi });
+                    if (window.cardano.typhon) availableWallets.push({ name: 'Typhon', api: 'typhon', icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNGRkQ3MDAiLz4KPHBhdGggZD0iTTEyIDRMOCAxMkgxMVYxNkwxNiA4SDEzVjRaIiBmaWxsPSIjMDAwMDAwIi8+Cjwvc3ZnPg==' });
+                    if (window.cardano.gerowallet) availableWallets.push({ name: 'Gero', api: 'gerowallet', icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiMwMEQ2MzIiLz4KPHBhdGggZD0iTTE2IDEyQzE2IDE0LjIwOTEgMTQuMjA5MSAxNiAxMiAxNkM5Ljc5MDg2IDE2IDggMTQuMjA5MSA4IDEyQzggOS43OTA4NiA5Ljc5MDg2IDggMTIgOEMxNC4yMDkxIDggMTYgOS43OTA4NiAxNiAxMloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==' });
+                    if (window.cardano.nufi) availableWallets.push({ name: 'NuFi', api: 'nufi', icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGw9IiNGRjZCMDAiLz4KPHBhdGggZD0iTTggOEgxMFYxNkg4VjhaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTQgOEgxNlYxNkgxNFY4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+' });
+                }
+                
+                if (availableWallets.length === 0) {
+                    throw new Error('No Cardano wallet detected. Please install a wallet extension.');
+                }
+                
+                // Show wallet selection
+                let selectedWallet;
+                if (availableWallets.length === 1) {
+                    selectedWallet = availableWallets[0].api;
+                } else {
+                    selectedWallet = await showWalletSelection(availableWallets);
+                    if (!selectedWallet) {
+                        throw new Error('No wallet selected');
+                    }
+                }
+                
+                // Connect to selected wallet
+                const walletApi = await window.cardano[selectedWallet].enable();
+                window.walletApi = walletApi;
+                window.lucid.selectWallet(walletApi);
+                
+                const address = await window.lucid.wallet.address();
+                
+                // Verify we're on preprod network
+                const network = await walletApi.getNetworkId();
+                if (network !== 0) { // 0 is preprod, 1 is mainnet
+                    throw new Error('Please switch your wallet to Preprod testnet. Mainnet is not supported.');
+                }
+                
+                statusDot.classList.remove('offline');
+                statusText.textContent = 'Online';
+                btn.textContent = 'Disconnect';
+                
+                // Show wallet info
+                walletInfo.style.display = 'flex';
+                
+                // Update balances
+                await updateBalances();
+                
+                // Check pool status after connecting
+                await checkPoolStatus();
+                
+                // Update swap button based on pool status
+                if (window.poolUtxo) {
+                    document.getElementById('swapBtn').textContent = 'Swap';
+                    document.getElementById('swapBtn').disabled = false;
+                } else {
+                    document.getElementById('swapBtn').textContent = 'No Pool Available';
+                }
+                
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                showError(error.message);
+                btn.textContent = 'Connect Wallet';
+            }
+        };
+        
+        window.toggleWalletDropdown = () => {
+            const dropdown = document.getElementById('walletDropdown');
+            const isOpening = dropdown.style.display === 'none';
+            dropdown.style.display = isOpening ? 'block' : 'none';
+            
+            // Play menu popup sound when opening dropdown
+            if (isOpening) {
+                playSound(menuPopupSound);
+            }
+        };
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const walletInfo = document.getElementById('walletInfo');
+            const dropdown = document.getElementById('walletDropdown');
+            if (walletInfo && !walletInfo.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+        
+        window.checkPoolStatus = async () => {
+            console.log('Checking for ADA-tPucky pool...');
+            
+            try {
+                // Constants from AMM V2 preprod deployment
+                const POOL_SCRIPT_HASH = "ea07b733d932129c378af627436e7cbc2ef0bf96e0036bb51b3bde6b";
+                const LP_TOKEN_POLICY_ID = "d6ba9b7509eac866288ff5072d2a18205ac56f744bc82dcd808cb8fe";
+                
+                // Token definitions
+                const ADA = { policyId: "", tokenName: "" };
+                const TPUCKY = {
+                    policyId: "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f",
+                    tokenName: "745075636b79"
+                };
+                
+                // Get pool address - using the actual address where the pool was created
+                const poolAddress = "addr_test1zrtt4xm4p84vse3g3l6swtf2rqs943t0w39ustwdszxt3l5rajt8r8wqtygrfduwgukk73m5gcnplmztc5tl5ngy0upqhns793";
+                
+                console.log(`Pool address: ${poolAddress}`);
+                
+                // Get all UTxOs at pool address
+                const poolUtxos = await window.lucid.utxosAt(poolAddress);
+                console.log(`Found ${poolUtxos.length} UTxOs at pool address`);
+                
+                // Look for ADA/tPucky pool by checking for tPucky in the assets
+                let foundPool = null;
+                const tPuckyUnit = TPUCKY.policyId + TPUCKY.tokenName;
+                
+                for (const utxo of poolUtxos) {
+                    // Debug log to see what's in each UTXO
+                    console.log(`Checking UTXO ${utxo.txHash}#${utxo.outputIndex}:`);
+                    console.log(`  Assets:`, Object.keys(utxo.assets));
+                    console.log(`  Has datum:`, !!utxo.datum);
+                    
+                    // A pool UTXO should have:
+                    // 1. ADA (lovelace)
+                    // 2. tPucky tokens
+                    // 3. A datum (pool state)
+                    // 4. Potentially LP tokens and other AMM NFTs
+                    if (utxo.assets[tPuckyUnit] && utxo.assets[tPuckyUnit] > 0n && 
+                        utxo.assets.lovelace && utxo.assets.lovelace > 1000000n) {
+                        
+                        // Check if this UTXO has other assets that might be LP tokens or pool NFTs
+                        const otherAssets = Object.keys(utxo.assets).filter(unit => 
+                            unit !== 'lovelace' && unit !== tPuckyUnit
+                        );
+                        
+                        console.log(`  Other assets in UTXO:`, otherAssets);
+                        
+                        // If this UTXO has ADA, tPucky, and other assets (likely LP tokens/NFTs), it's probably our pool
+                        if (otherAssets.length > 0 || utxo.datum) {
+                            foundPool = utxo;
+                            window.poolUtxo = utxo;
+                            console.log('✅ Found ADA/tPucky pool!');
+                            console.log(`   TX Hash: ${utxo.txHash}`);
+                            console.log(`   ADA: ${Number(utxo.assets.lovelace) / 1_000_000}`);
+                            const tPuckyAmount = utxo.assets[tPuckyUnit] || 0n;
+                            console.log(`   tPucky: ${Number(tPuckyAmount).toLocaleString()}`);
+                            
+                            // Log all other assets
+                            otherAssets.forEach(asset => {
+                                console.log(`   Asset: ${asset} = ${utxo.assets[asset]}`);
+                            });
+                            
+                            break;
+                        }
+                    }
+                }
+                
+                if (!foundPool) {
+                    // No pool found, show create pool option
+                    document.getElementById('poolAlert').style.display = 'block';
+                    document.getElementById('swapBtn').disabled = true;
+                    document.getElementById('swapBtn').textContent = 'No Pool Available';
+                    
+                    // Update liquidity tab
+                    document.getElementById('tvlValue').textContent = '$0.00';
+                    document.getElementById('adaReserve').textContent = '0 ADA';
+                    document.getElementById('tPuckyReserve').textContent = '0 tPUCKY';
+                    document.getElementById('poolRate').textContent = '-';
+                    
+                    console.log('No pool found. Pool creation required.');
+                } else {
+                    // Pool exists, enable trading
+                    document.getElementById('poolAlert').style.display = 'none';
+                    
+                    // Update swap button if wallet is connected
+                    if (window.walletApi) {
+                        document.getElementById('swapBtn').textContent = 'Swap';
+                        document.getElementById('swapBtn').disabled = false;
+                    }
+
+                    // Calculate TVL (assuming 1 ADA = $0.35 for demo)
+                    const adaAmount = Number(foundPool.assets.lovelace) / 1_000_000;
+                    const tPuckyAmount = Number(foundPool.assets[tPuckyUnit] || 0n);
+                    const tvl = adaAmount * 2 * 0.35; // Times 2 because pool has equal value of both assets
+                    
+                    // Update liquidity tab
+                    document.getElementById('tvlValue').textContent = `$${tvl.toFixed(2)}`;
+                    document.getElementById('adaReserve').textContent = `${adaAmount.toLocaleString()} ADA`;
+                    document.getElementById('tPuckyReserve').textContent = `${tPuckyAmount.toLocaleString()} tPUCKY`;
+                    
+                    // Calculate exchange rate
+                    const rate = tPuckyAmount / adaAmount;
+                    document.getElementById('poolRate').textContent = `1 ADA = ${rate.toFixed(2)} tPUCKY`;
+
+                    console.log('Pool found and ready for trading!');
+                }
+            } catch (error) {
+                console.error('Error checking pool status:', error);
+                // Assume no pool for now
+                document.getElementById('poolAlert').style.display = 'flex';
+                document.getElementById('poolStatus').style.display = 'none'; // Hide pool status
+            }
+        };
+        
+        window.updateBalances = async () => {
+            if (!window.walletApi) return;
+            
+            try {
+                const utxos = await window.lucid.wallet.getUtxos();
+                
+                // Calculate ADA balance
+                const adaBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets.lovelace || 0n), 0n
+                );
+                
+                // Calculate tPucky balance
+                const tPuckyUnit = 'c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f745075636b79';
+                const tPuckyBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets[tPuckyUnit] || 0n), 0n
+                );
+                
+                // Update wallet balance display
+                const adaAmount = Number(adaBalance) / 1_000_000;
+                document.getElementById('walletBalance').textContent = 
+                    `${adaAmount.toFixed(2)} ADA`;
+                
+                // Update wallet dropdown with all assets
+                const assetList = document.getElementById('walletAssets');
+                assetList.innerHTML = '';
+                
+                // Add ADA
+                const adaItem = document.createElement('div');
+                adaItem.className = 'wallet-asset-item';
+                adaItem.innerHTML = `
+                    <span class="wallet-asset-name">ADA</span>
+                    <span class="wallet-asset-amount">${adaAmount.toFixed(2)}</span>
+                `;
+                assetList.appendChild(adaItem);
+                
+                // Add tPucky if balance > 0
+                if (tPuckyBalance > 0n) {
+                    const tPuckyItem = document.createElement('div');
+                    tPuckyItem.className = 'wallet-asset-item';
+                    tPuckyItem.innerHTML = `
+                        <span class="wallet-asset-name">tPUCKY</span>
+                        <span class="wallet-asset-amount">${Number(tPuckyBalance).toLocaleString()}</span>
+                    `;
+                    assetList.appendChild(tPuckyItem);
+                }
+                
+                // Store balances for swap calculations
+                window.userBalances = {
+                    ADA: adaBalance,
+                    tPucky: tPuckyBalance
+                };
+                
+            } catch (error) {
+                console.error('Error updating balances:', error);
+            }
+        };
+        
+        window.handleTokenChange = () => {
+            const fromToken = document.getElementById('fromToken').value;
+            const toToken = document.getElementById('toToken').value;
+            
+            // Clear amounts
+            document.getElementById('fromAmount').value = '';
+            document.getElementById('toAmount').value = '';
+            document.getElementById('swapInfo').style.display = 'none';
+            
+            // Update balances
+            updateBalances();
+        };
+        
+        window.reverseTokens = () => {
+            const fromToken = document.getElementById('fromToken');
+            const toToken = document.getElementById('toToken');
+            
+            const temp = fromToken.value;
+            fromToken.value = toToken.value;
+            toToken.value = temp;
+            
+            handleTokenChange();
+        };
+        
+        window.calculateSwap = () => {
+            const amount = document.getElementById('fromAmount').value;
+            const swapBtn = document.getElementById('swapBtn');
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                document.getElementById('toAmount').value = '';
+                document.getElementById('swapInfo').style.display = 'none';
+                if (window.walletApi && window.poolUtxo) {
+                    swapBtn.textContent = 'Enter an amount';
+                    swapBtn.disabled = true;
+                }
+                return;
+            }
+            
+            // Check if we have pool data
+            if (!window.poolUtxo) {
+                // No pool exists, can't calculate
+                document.getElementById('toAmount').value = '0.0';
+                document.getElementById('swapInfo').style.display = 'none';
+                swapBtn.textContent = 'No Pool Available';
+                swapBtn.disabled = true;
+                return;
+            }
+            
+            // Check if wallet is connected
+            if (!window.walletApi) {
+                swapBtn.textContent = 'Connect Wallet';
+                swapBtn.disabled = true;
+                return;
+            }
+            
+            try {
+                const fromToken = document.getElementById('fromToken').value;
+                const toToken = document.getElementById('toToken').value;
+                
+                // Get pool reserves
+                const adaReserve = Number(window.poolUtxo.assets.lovelace) / 1_000_000;
+                const tPuckyUnit = "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f745075636b79";
+                const tPuckyReserve = Number(window.poolUtxo.assets[tPuckyUnit] || 0n);
+                
+                // Input amount
+                const inputAmount = parseFloat(amount);
+                
+                // Calculate output using constant product formula (x * y = k)
+                // With 0.3% fee (0.997 multiplier)
+                let outputAmount;
+                let priceImpact;
+                
+                if (fromToken === 'ADA') {
+                    // Swapping ADA for tPucky
+                    const inputWithFee = inputAmount * 0.997;
+                    const newAdaReserve = adaReserve + inputWithFee;
+                    const newTpuckyReserve = (adaReserve * tPuckyReserve) / newAdaReserve;
+                    outputAmount = tPuckyReserve - newTpuckyReserve;
+                    
+                    // Calculate price impact
+                    const spotPrice = tPuckyReserve / adaReserve;
+                    const executionPrice = outputAmount / inputAmount;
+                    priceImpact = Math.abs((spotPrice - executionPrice) / spotPrice) * 100;
+                } else {
+                    // Swapping tPucky for ADA
+                    const inputWithFee = inputAmount * 0.997;
+                    const newTpuckyReserve = tPuckyReserve + inputWithFee;
+                    const newAdaReserve = (adaReserve * tPuckyReserve) / newTpuckyReserve;
+                    outputAmount = adaReserve - newAdaReserve;
+                    
+                    // Calculate price impact
+                    const spotPrice = adaReserve / tPuckyReserve;
+                    const executionPrice = outputAmount / inputAmount;
+                    priceImpact = Math.abs((spotPrice - executionPrice) / spotPrice) * 100;
+                }
+                
+                // Update UI
+                document.getElementById('toAmount').value = outputAmount.toFixed(6);
+                document.getElementById('swapInfo').style.display = 'block';
+                
+                // Update exchange rate
+                const rate = outputAmount / inputAmount;
+                document.getElementById('exchangeRate').textContent = 
+                    `1 ${fromToken} = ${rate.toFixed(6)} ${toToken}`;
+                
+                // Update price impact
+                document.getElementById('priceImpact').textContent = 
+                    priceImpact < 0.01 ? '< 0.01%' : `${priceImpact.toFixed(2)}%`;
+                
+                // Show warning for high price impact
+                if (priceImpact > 5) {
+                    showError('Warning: High price impact! Consider reducing your trade size.');
+                }
+                
+                // Enable swap button
+                swapBtn.textContent = 'Swap';
+                swapBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error calculating swap:', error);
+                document.getElementById('toAmount').value = '0.0';
+                document.getElementById('swapInfo').style.display = 'none';
+                swapBtn.textContent = 'Error';
+                swapBtn.disabled = true;
+            }
+        };
+        
+        window.executeSwap = async () => {
+            const btn = document.getElementById('swapBtn');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.innerHTML = '<span class="loading"></span> Processing...';
+                btn.disabled = true;
+                
+                const fromAmount = document.getElementById('fromAmount').value;
+                const fromToken = document.getElementById('fromToken').value;
+                
+                if (!fromAmount || parseFloat(fromAmount) <= 0) {
+                    throw new Error('Please enter an amount');
+                }
+                
+                // In real implementation, this would build and submit the swap transaction
+                showSuccess('Swap order submitted! Waiting for batcher...');
+                
+                // Simulate transaction
+                setTimeout(() => {
+                    // Play chimes sound on successful swap
+                    playSound(chimesSound);
+                    
+                    showSuccess('Swap completed successfully!');
+                    document.getElementById('fromAmount').value = '';
+                    document.getElementById('toAmount').value = '';
+                    document.getElementById('swapInfo').style.display = 'none';
+                    updateBalances();
+                }, 3000);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+        
+        window.showError = (message) => {
+            const msgEl = document.getElementById('message');
+            msgEl.className = 'message error-message';
+            msgEl.textContent = message;
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+                msgEl.textContent = '';
+            }, 5000);
+        };
+        
+        window.showSuccess = (message) => {
+            const msgEl = document.getElementById('message');
+            msgEl.className = 'message success-message';
+            msgEl.textContent = message;
+            msgEl.style.display = 'block';
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+                msgEl.textContent = '';
+            }, 5000);
+        };
+        
+
+
+        window.showWalletSelection = async (wallets) => {
+            return new Promise((resolve) => {
+                // Create modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                `;
+                
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    background: var(--bg-secondary);
+                    border: 2px solid var(--accent-color);
+                    border-radius: 0;
+                    padding: 30px;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+                `;
+                
+                let walletButtons = '';
+                wallets.forEach(wallet => {
+                    walletButtons += `
+                        <button class="wallet-select-btn" data-wallet="${wallet.api}" style="
+                            padding: 15px;
+                            border: 1px solid var(--border-color);
+                            background: var(--bg-tertiary);
+                            color: var(--text-primary);
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-family: 'Space Mono', monospace;
+                            transition: all 0.2s;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            width: 100%;
+                            text-align: left;
+                        ">
+                            ${wallet.icon.startsWith('data:') ? 
+                                `<img src="${wallet.icon}" alt="${wallet.name}" style="width: 24px; height: 24px; border-radius: 50%;">` :
+                                `<img src="${wallet.icon}" alt="${wallet.name}" style="width: 24px; height: 24px; border-radius: 4px; object-fit: cover;">`
+                            }
+                            <span>${wallet.name} Wallet</span>
+                        </button>
+                    `;
+                });
+                
+                dialog.innerHTML = `
+                    <h3 style="margin: 0 0 20px 0; color: var(--text-primary); font-size: 16px; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;">Select Wallet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 12px; font-family: 'Space Mono', monospace;">Choose a wallet to connect:</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${walletButtons}
+                        <button id="cancelSelection" style="
+                            padding: 12px;
+                            border: 1px solid var(--border-color);
+                            background: var(--bg-tertiary);
+                            color: var(--text-secondary);
+                            cursor: pointer;
+                            font-size: 12px;
+                            font-family: 'Space Mono', monospace;
+                            margin-top: 10px;
+                            transition: all 0.2s;
+                        ">
+                            Cancel
+                        </button>
+                    </div>
+                `;
+                
+                modal.appendChild(dialog);
+                document.body.appendChild(modal);
+                
+                // Add hover effects
+                const buttons = dialog.querySelectorAll('.wallet-select-btn');
+                buttons.forEach(btn => {
+                    btn.addEventListener('mouseenter', () => {
+                        btn.style.borderColor = 'var(--accent-color)';
+                        btn.style.background = 'var(--bg-secondary)';
+                    });
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.borderColor = 'var(--border-color)';
+                        btn.style.background = 'var(--bg-tertiary)';
+                    });
+                    btn.addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                        resolve(btn.dataset.wallet);
+                    });
+                });
+                
+                // Cancel button
+                const cancelBtn = document.getElementById('cancelSelection');
+                cancelBtn.addEventListener('mouseenter', () => {
+                    cancelBtn.style.borderColor = 'var(--accent-color)';
+                });
+                cancelBtn.addEventListener('mouseleave', () => {
+                    cancelBtn.style.borderColor = 'var(--border-color)';
+                });
+                cancelBtn.addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                    resolve(null);
+                });
+                
+                // Click outside to close
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                        resolve(null);
+                    }
+                };
+            });
+        };
+
+        // Puck.fun functionality
+        const puckPhrases = [
+            "puck you",
+            "puck me",
+            "puck off",
+            "go puck yourself",
+            "feeling pucky",
+            "what the puck",
+            "what the pucky",
+            "enhance",
+            "enhance the image",
+            "puck",
+            "puck yeah",
+            "holy puck",
+            "pucky wucky",
+            "get pucked",
+            "puck it up",
+            "puck around",
+            "pucking awesome",
+            "mother pucker",
+            "puck this",
+            "puck that"
+        ];
+
+        // Calculator functionality
+        let calcDisplay = '0';
+        let calcOperator = null;
+        let calcPreviousValue = null;
+        let calcWaitingForOperand = false;
+
+        window.clearCalc = () => {
+            calcDisplay = '0';
+            calcOperator = null;
+            calcPreviousValue = null;
+            calcWaitingForOperand = false;
+            updateCalcDisplay();
+        };
+
+        window.deleteLastCalc = () => {
+            if (calcDisplay.length > 1) {
+                calcDisplay = calcDisplay.slice(0, -1);
+            } else {
+                calcDisplay = '0';
+            }
+            updateCalcDisplay();
+        };
+
+        window.appendCalc = (value) => {
+            if ('+-*/'.includes(value)) {
+                handleOperator(value);
+            } else if (value === '.') {
+                if (!calcDisplay.includes('.')) {
+                    calcDisplay += '.';
+                    updateCalcDisplay();
+                }
+            } else {
+                if (calcWaitingForOperand) {
+                    calcDisplay = value;
+                    calcWaitingForOperand = false;
+                } else {
+                    calcDisplay = calcDisplay === '0' ? value : calcDisplay + value;
+                }
+                updateCalcDisplay();
+            }
+        };
+
+        const handleOperator = (nextOperator) => {
+            const inputValue = parseFloat(calcDisplay);
+
+            if (calcPreviousValue === null) {
+                calcPreviousValue = inputValue;
+            } else if (calcOperator) {
+                const currentValue = calcPreviousValue || 0;
+                const newValue = calculate(currentValue, inputValue, calcOperator);
+                calcDisplay = String(newValue);
+                calcPreviousValue = newValue;
+                updateCalcDisplay();
+            }
+
+            calcWaitingForOperand = true;
+            calcOperator = nextOperator;
+        };
+
+        const calculate = (firstValue, secondValue, operator) => {
+            switch (operator) {
+                case '+': return firstValue + secondValue;
+                case '-': return firstValue - secondValue;
+                case '*': return firstValue * secondValue;
+                case '/': return secondValue !== 0 ? firstValue / secondValue : 0;
+                default: return secondValue;
+            }
+        };
+
+        window.calculateResult = () => {
+            const inputValue = parseFloat(calcDisplay);
+
+            if (calcPreviousValue !== null && calcOperator) {
+                const newValue = calculate(calcPreviousValue, inputValue, calcOperator);
+                calcDisplay = String(newValue);
+                calcOperator = null;
+                calcPreviousValue = null;
+                calcWaitingForOperand = true;
+                updateCalcDisplay();
+            }
+        };
+
+        const updateCalcDisplay = () => {
+            const display = document.getElementById('calcDisplay');
+            if (display) {
+                display.textContent = calcDisplay;
+            }
+        };
+
+        // Theme toggle functionality
+        window.toggleTheme = () => {
+            const body = document.body;
+            const logoImage = document.getElementById('logoImage');
+            
+            body.classList.toggle('light-mode');
+            
+            // Switch logo based on theme
+            if (body.classList.contains('light-mode')) {
+                logoImage.src = 'puckyv2.PNG';
+                localStorage.setItem('theme', 'light');
+            } else {
+                logoImage.src = 'pucky.jpg';
+                localStorage.setItem('theme', 'dark');
+            }
+        };
+
+        // Load saved theme on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const logoImage = document.getElementById('logoImage');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                logoImage.src = 'puckyv2.PNG';
+            } else {
+                logoImage.src = 'pucky.jpg';
+            }
+            
+            // Start UTC clock
+            updateUTCClock();
+            setInterval(updateUTCClock, 1000);
+        });
+
+        // Update UTC clock
+        function updateUTCClock() {
+            const now = new Date();
+            const utcHours = String(now.getUTCHours()).padStart(2, '0');
+            const utcMinutes = String(now.getUTCMinutes()).padStart(2, '0');
+            const utcSeconds = String(now.getUTCSeconds()).padStart(2, '0');
+            const clockElement = document.getElementById('utcClock');
+            if (clockElement) {
+                clockElement.textContent = `${utcHours}:${utcMinutes}:${utcSeconds} UTC`;
+            }
+        }
+
+        // Create audio element for censor beep
+        const censorBeep = new Audio('censor-beep.mp3');
+        censorBeep.volume = 0.5;
+
+        // Create audio elements for UI sounds
+        const menuPopupSound = new Audio('../Utopia Menu Popup.mp3');
+        menuPopupSound.volume = 0.5;
+        
+        const logoffSound = new Audio('../LOGOFF.mp3');
+        logoffSound.volume = 0.5;
+        
+        const chimesSound = new Audio('../CHIMES.mp3');
+        chimesSound.volume = 0.5;
+
+        function playBleep() {
+            // Clone the audio to allow multiple plays
+            const beepClone = censorBeep.cloneNode();
+            beepClone.volume = 0.5;
+            beepClone.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        function playSound(sound) {
+            // Clone the audio to allow multiple plays
+            const soundClone = sound.cloneNode();
+            soundClone.volume = 0.5;
+            soundClone.play().catch(e => console.log('Audio play failed:', e));
+        }
+
+        window.pressPuck = () => {
+            const bubbleContainer = document.getElementById('bubbleContainer');
+            
+            // Play bleep sound
+            playBleep();
+            
+            // Get the image element
+            let img = bubbleContainer.querySelector('img');
+            
+            // Clear existing bubbles only
+            const existingBubbles = bubbleContainer.querySelectorAll('.text-bubble');
+            existingBubbles.forEach(bubble => bubble.remove());
+            
+            // Get random phrase
+            const randomPhrase = puckPhrases[Math.floor(Math.random() * puckPhrases.length)];
+            
+            // Create bubble
+            const bubble = document.createElement('div');
+            bubble.className = 'text-bubble';
+            bubble.textContent = randomPhrase;
+            
+            // Position bubble around the image
+            const containerRect = bubbleContainer.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+            
+            // Calculate relative positions
+            const imgRelativeTop = imgRect.top - containerRect.top;
+            const imgRelativeLeft = imgRect.left - containerRect.left;
+            
+            // Define possible positions around the image with adjusted spacing for larger image
+            const positions = [
+                { x: imgRelativeLeft - 120, y: imgRelativeTop + 20 }, // Left
+                { x: imgRelativeLeft + imgRect.width - 30, y: imgRelativeTop + 20 }, // Right
+                { x: imgRelativeLeft + (imgRect.width / 2) - 75, y: imgRelativeTop - 60 }, // Top
+                { x: imgRelativeLeft + (imgRect.width / 2) - 75, y: imgRelativeTop + imgRect.height + 10 }, // Bottom
+                { x: imgRelativeLeft - 100, y: imgRelativeTop - 40 }, // Top-left
+                { x: imgRelativeLeft + imgRect.width - 50, y: imgRelativeTop - 40 }, // Top-right
+                { x: imgRelativeLeft - 100, y: imgRelativeTop + imgRect.height - 20 }, // Bottom-left
+                { x: imgRelativeLeft + imgRect.width - 50, y: imgRelativeTop + imgRect.height - 20 } // Bottom-right
+            ];
+            
+            // Pick a random position
+            const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+            
+            // Ensure bubble stays within container bounds
+            const bubbleX = Math.max(10, Math.min(randomPosition.x, containerRect.width - 160));
+            const bubbleY = Math.max(10, Math.min(randomPosition.y, containerRect.height - 60));
+            
+            bubble.style.left = `${bubbleX}px`;
+            bubble.style.top = `${bubbleY}px`;
+            
+            bubbleContainer.appendChild(bubble);
+            
+            // Remove bubble after animation
+            setTimeout(() => {
+                bubble.style.animation = 'bubbleFadeOut 0.5s ease-out forwards';
+                setTimeout(() => {
+                    bubble.remove();
+                }, 500);
+            }, 2000);
+        };
+    </script>
+</body>
+</html> 

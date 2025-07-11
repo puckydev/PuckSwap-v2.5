@@ -1,0 +1,13 @@
+{
+  "name": "puckswap-root",
+  "version": "1.0.0",
+  "description": "PuckSwap DEX root directory",
+  "scripts": {
+    "serve": "cd PuckSwap-v2.5/puckswap && npm run serve",
+    "setup-pool": "cd PuckSwap-v2.5/puckswap && npm run setup-pool",
+    "dev": "cd PuckSwap-v2.5/puckswap && npm run serve"
+  },
+  "keywords": ["cardano", "dex", "puckswap"],
+  "author": "",
+  "license": "MIT"
+} 

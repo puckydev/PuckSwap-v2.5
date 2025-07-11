@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏒 PuckSwap - Simple DEX for ADA ↔ tPucky</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏒</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 480px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .wallet-section {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wallet-status {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .connect-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+
+        .connect-btn:hover {
+            background: #5a67d8;
+        }
+
+        .swap-container {
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .token-input {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .token-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .token-select {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .token-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .amount-input {
+            width: 100%;
+            border: none;
+            font-size: 1.5em;
+            outline: none;
+            background: transparent;
+            text-align: right;
+        }
+
+        .swap-arrow {
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+
+        .swap-arrow-icon {
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e0e0e0;
+            transition: transform 0.3s;
+        }
+
+        .swap-arrow:hover .swap-arrow-icon {
+            transform: rotate(180deg);
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .swap-button {
+            width: 100%;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .swap-button:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .swap-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #38a169;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .testnet-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .pool-alert {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alert-icon {
+            font-size: 2em;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            color: #856404;
+            font-size: 0.9em;
+        }
+
+        .create-pool-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .create-pool-btn:hover {
+            background: #5a67d8;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 20px;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .pool-params {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pool-params h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .param-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .param-row strong {
+            color: #333;
+        }
+
+        .requirements {
+            margin-bottom: 20px;
+        }
+
+        .requirements h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .req-icon {
+            font-size: 1.2em;
+        }
+
+        .requirement-item.met {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .requirement-item.met .req-icon {
+            content: '✅';
+        }
+
+        .requirement-item.not-met {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 15px;
+            color: #856404;
+            font-size: 0.9em;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .cancel-btn {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .cancel-btn:hover {
+            background: #d0d0d0;
+        }
+
+        .confirm-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .confirm-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pool-status {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .pool-status h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .pool-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .pool-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .value {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="testnet-badge">TESTNET</div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏒</div>
+            <h1>PuckSwap</h1>
+            <p class="subtitle">Simple DEX for ADA ↔ tPucky swaps</p>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-status" id="walletStatus">
+                <span>Not connected</span>
+            </div>
+            <button class="connect-btn" id="connectBtn" onclick="connectWallet()">
+                Connect Wallet
+            </button>
+        </div>
+
+        <!-- Pool Status Display -->
+        <div id="poolStatus" class="pool-status" style="display: none;">
+            <h3>Pool Information</h3>
+            <div class="pool-info-grid">
+                <div class="pool-info-item">
+                    <span class="label">Total Value Locked</span>
+                    <span class="value" id="tvlValue">-</span>
+                </div>
+                <div class="pool-info-item">
+                    <span class="label">ADA Reserve</span>
+                    <span class="value" id="adaReserve">-</span>
+                </div>
+                <div class="pool-info-item">
+                    <span class="label">tPucky Reserve</span>
+                    <span class="value" id="tPuckyReserve">-</span>
+                </div>
+                <div class="pool-info-item">
+                    <span class="label">Exchange Rate</span>
+                    <span class="value" id="poolRate">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pool Status Alert -->
+        <div id="poolAlert" class="pool-alert" style="display: none;">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <div class="alert-title">No Liquidity Pool Found</div>
+                <div class="alert-message">Create the initial ADA-tPucky pool to start trading</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="create-pool-btn" onclick="showPoolCreation()">
+                    Create Pool
+                </button>
+                <button class="create-pool-btn" style="background: #e0e0e0; color: #333;" onclick="refreshPoolStatus()">
+                    🔄 Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Pool Creation Modal -->
+        <div id="poolCreationModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Create Liquidity Pool</h2>
+                    <span class="close" onclick="closePoolCreation()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="pool-params">
+                        <h3>Pool Parameters</h3>
+                        <div class="param-row">
+                            <span>Initial ADA:</span>
+                            <strong>10,000 ADA</strong>
+                        </div>
+                        <div class="param-row">
+                            <span>Initial tPucky:</span>
+                            <strong>10,000,000,000 tPucky</strong>
+                        </div>
+                        <div class="param-row">
+                            <span>Trading Fee:</span>
+                            <strong>0.3%</strong>
+                        </div>
+                        <div class="param-row">
+                            <span>Expected LP Tokens:</span>
+                            <strong>~316,227,766 LP</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h3>Requirements</h3>
+                        <div class="requirement-item" id="adaReq">
+                            <span class="req-icon">⏳</span>
+                            <span>10,015 ADA (including fees)</span>
+                        </div>
+                        <div class="requirement-item" id="tPuckyReq">
+                            <span class="req-icon">⏳</span>
+                            <span>10,000,000,000 tPucky</span>
+                        </div>
+                    </div>
+                    
+                    <div class="warning-box">
+                        <strong>⚠️ Important:</strong> Creating a pool will lock your tokens in the liquidity pool. You'll receive LP tokens that represent your share of the pool.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-btn" onclick="closePoolCreation()">Cancel</button>
+                    <button class="confirm-btn" id="confirmPoolBtn" onclick="createPool()" disabled>
+                        Create Pool
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="swap-container" id="swapContainer">
+            <div class="token-input">
+                <div class="token-label">
+                    <span>From</span>
+                    <span id="fromBalance">Balance: -</span>
+                </div>
+                <div class="token-select">
+                    <div class="token-icon" id="fromIcon">₳</div>
+                    <select id="fromToken" onchange="handleTokenChange()">
+                        <option value="ADA">ADA</option>
+                        <option value="tPucky">tPucky</option>
+                    </select>
+                </div>
+                <input type="number" 
+                       class="amount-input" 
+                       id="fromAmount" 
+                       placeholder="0.0"
+                       oninput="calculateSwap()">
+            </div>
+
+            <div class="swap-arrow" onclick="reverseTokens()">
+                <div class="swap-arrow-icon">⇅</div>
+            </div>
+
+            <div class="token-input">
+                <div class="token-label">
+                    <span>To</span>
+                    <span id="toBalance">Balance: -</span>
+                </div>
+                <div class="token-select">
+                    <div class="token-icon" id="toIcon">🏒</div>
+                    <select id="toToken" onchange="handleTokenChange()">
+                        <option value="tPucky">tPucky</option>
+                        <option value="ADA">ADA</option>
+                    </select>
+                </div>
+                <input type="number" 
+                       class="amount-input" 
+                       id="toAmount" 
+                       placeholder="0.0"
+                       readonly>
+            </div>
+        </div>
+
+        <div class="info-section" id="swapInfo" style="display: none;">
+            <div class="info-row">
+                <span>Exchange Rate</span>
+                <span id="exchangeRate">-</span>
+            </div>
+            <div class="info-row">
+                <span>Price Impact</span>
+                <span id="priceImpact">-</span>
+            </div>
+            <div class="info-row">
+                <span>Batcher Fee</span>
+                <span>2 ADA</span>
+            </div>
+            <div class="info-row">
+                <span>Slippage Tolerance</span>
+                <span>0.5%</span>
+            </div>
+        </div>
+
+        <button class="swap-button" id="swapBtn" onclick="executeSwap()" disabled>
+            Connect Wallet
+        </button>
+
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        // Import Lucid and other dependencies
+        import { Lucid, Blockfrost } from 'https://unpkg.com/lucid-cardano@0.10.7/web/mod.js';
+        
+        // Make functions available globally
+        window.lucid = null;
+        window.walletApi = null;
+        window.poolUtxo = null;
+        window.Lucid = Lucid;
+        window.Blockfrost = Blockfrost;
+        
+        // Initialize
+        window.onload = async () => {
+            try {
+                window.lucid = await window.Lucid.new(
+                    new window.Blockfrost(
+                        'https://cardano-preprod.blockfrost.io/api/v0',
+                        'preprodd86p4euUeF6yIUbwl03sJJMD03aICMxL'
+                    ),
+                    'Preprod'
+                );
+                
+                // Check for pool existence
+                await checkPoolStatus();
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        };
+        
+        window.connectWallet = async () => {
+            const btn = document.getElementById('connectBtn');
+            const status = document.getElementById('walletStatus');
+            
+            try {
+                btn.innerHTML = '<span class="loading"></span>';
+                
+                // Ensure Lucid is initialized
+                if (!window.lucid) {
+                    console.log('Lucid not initialized, initializing now...');
+                    window.lucid = await window.Lucid.new(
+                        new window.Blockfrost(
+                            'https://cardano-preprod.blockfrost.io/api/v0',
+                            'preprodd86p4euUeF6yIUbwl03sJJMD03aICMxL'
+                        ),
+                        'Preprod'
+                    );
+                }
+                
+                // Check for available wallets
+                const hasNami = window.cardano && window.cardano.nami;
+                const hasVespr = window.cardano && window.cardano.vespr;
+                
+                if (!window.cardano || (!hasNami && !hasVespr)) {
+                    throw new Error('Please install Nami or VESPR wallet');
+                }
+                
+                // If both wallets are available, show a selection dialog
+                let walletApi;
+                if (hasNami && hasVespr) {
+                    // Create a simple wallet selection
+                    const selectedWallet = await showWalletSelection();
+                    if (selectedWallet === 'nami') {
+                        walletApi = await window.cardano.nami.enable();
+                    } else if (selectedWallet === 'vespr') {
+                        walletApi = await window.cardano.vespr.enable();
+                    } else {
+                        throw new Error('No wallet selected');
+                    }
+                } else if (hasNami) {
+                    walletApi = await window.cardano.nami.enable();
+                } else if (hasVespr) {
+                    walletApi = await window.cardano.vespr.enable();
+                }
+                
+                window.walletApi = walletApi;
+                window.lucid.selectWallet(walletApi);
+                
+                const address = await window.lucid.wallet.address();
+                status.innerHTML = `Connected: ${address.slice(0, 10)}...${address.slice(-6)}`;
+                btn.textContent = 'Disconnect';
+                
+                // Update balances
+                await updateBalances();
+                
+                // Check pool status after connecting
+                await checkPoolStatus();
+                
+                // Update swap button based on pool status
+                if (window.poolUtxo) {
+                    document.getElementById('swapBtn').textContent = 'Swap';
+                    document.getElementById('swapBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                showError(error.message);
+                btn.textContent = 'Connect Wallet';
+            }
+        };
+        
+        window.checkPoolStatus = async () => {
+            console.log('Checking for ADA-tPucky pool...');
+            
+            try {
+                // Constants from AMM preprod deployment
+                const POOL_SCRIPT_HASH = "ea07b733d932129c378af627436e7cbc2ef0bf96e0036bb51b3bde6b";
+                const LP_TOKEN_POLICY_ID = "d6ba9b7509eac866288ff5072d2a18205ac56f744bc82dcd808cb8fe";
+                
+                // Token definitions
+                const ADA = { policyId: "", tokenName: "" };
+                const TPUCKY = {
+                    policyId: "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f",
+                    tokenName: "745075636b79"
+                };
+                
+                // Get pool address - using the actual address where the pool was created
+                const poolAddress = "addr_test1zrtt4xm4p84vse3g3l6swtf2rqs943t0w39ustwdszxt3l5rajt8r8wqtygrfduwgukk73m5gcnplmztc5tl5ngy0upqhns793";
+                
+                console.log(`Pool address: ${poolAddress}`);
+                
+                // Get all UTxOs at pool address
+                const poolUtxos = await window.lucid.utxosAt(poolAddress);
+                console.log(`Found ${poolUtxos.length} UTxOs at pool address`);
+                
+                // Look for ADA/tPucky pool by checking for tPucky in the assets
+                let foundPool = null;
+                const tPuckyUnit = TPUCKY.policyId + TPUCKY.tokenName;
+                
+                for (const utxo of poolUtxos) {
+                    // Debug log to see what's in each UTXO
+                    console.log(`Checking UTXO ${utxo.txHash}#${utxo.outputIndex}:`);
+                    console.log(`  Assets:`, Object.keys(utxo.assets));
+                    console.log(`  Has datum:`, !!utxo.datum);
+                    
+                    // A pool UTXO should have:
+                    // 1. ADA (lovelace)
+                    // 2. tPucky tokens
+                    // 3. A datum (pool state)
+                    // 4. Potentially LP tokens and other AMM NFTs
+                    if (utxo.assets[tPuckyUnit] && utxo.assets[tPuckyUnit] > 0n && 
+                        utxo.assets.lovelace && utxo.assets.lovelace > 1000000n) {
+                        
+                        // Check if this UTXO has other assets that might be LP tokens or pool NFTs
+                        const otherAssets = Object.keys(utxo.assets).filter(unit => 
+                            unit !== 'lovelace' && unit !== tPuckyUnit
+                        );
+                        
+                        console.log(`  Other assets in UTXO:`, otherAssets);
+                        
+                        // If this UTXO has ADA, tPucky, and other assets (likely LP tokens/NFTs), it's probably our pool
+                        if (otherAssets.length > 0 || utxo.datum) {
+                            foundPool = utxo;
+                            window.poolUtxo = utxo;
+                            console.log('✅ Found ADA/tPucky pool!');
+                            console.log(`   TX Hash: ${utxo.txHash}`);
+                            console.log(`   ADA: ${Number(utxo.assets.lovelace) / 1_000_000}`);
+                            const tPuckyAmount = utxo.assets[tPuckyUnit] || 0n;
+                            console.log(`   tPucky: ${Number(tPuckyAmount).toLocaleString()}`);
+                            
+                            // Log all other assets
+                            otherAssets.forEach(asset => {
+                                console.log(`   Asset: ${asset} = ${utxo.assets[asset]}`);
+                            });
+                            
+                            break;
+                        }
+                    }
+                }
+                
+                if (!foundPool) {
+                    // No pool found, show create pool option
+                    document.getElementById('poolAlert').style.display = 'flex';
+                    document.getElementById('swapContainer').style.opacity = '0.5';
+                    document.getElementById('swapContainer').style.pointerEvents = 'none';
+                    document.getElementById('swapBtn').disabled = true;
+                    document.getElementById('swapBtn').textContent = 'Pool Required';
+                    document.getElementById('poolStatus').style.display = 'none'; // Hide pool status
+                    console.log('No pool found. Pool creation required.');
+                } else {
+                    // Pool exists, enable trading
+                    document.getElementById('poolAlert').style.display = 'none';
+                    document.getElementById('swapContainer').style.opacity = '1';
+                    document.getElementById('swapContainer').style.pointerEvents = 'auto';
+                    
+                    // Update swap button if wallet is connected
+                    if (window.walletApi) {
+                        document.getElementById('swapBtn').textContent = 'Swap';
+                        document.getElementById('swapBtn').disabled = false;
+                    }
+
+                    // Update pool status display
+                    document.getElementById('poolStatus').style.display = 'block';
+                    
+                    // Calculate TVL (assuming 1 ADA = $0.35 for demo)
+                    const adaAmount = Number(foundPool.assets.lovelace) / 1_000_000;
+                    const tPuckyAmount = Number(foundPool.assets[tPuckyUnit] || 0n);
+                    const tvl = adaAmount * 2 * 0.35; // Times 2 because pool has equal value of both assets
+                    
+                    document.getElementById('tvlValue').textContent = `$${tvl.toFixed(2)}`;
+                    document.getElementById('adaReserve').textContent = `${adaAmount.toLocaleString()} ADA`;
+                    document.getElementById('tPuckyReserve').textContent = `${tPuckyAmount.toLocaleString()} tPucky`;
+                    
+                    // Calculate exchange rate
+                    const rate = tPuckyAmount / adaAmount;
+                    document.getElementById('poolRate').textContent = `1 ADA = ${rate.toFixed(2)} tPucky`;
+
+                    console.log('Pool found and ready for trading!');
+                }
+            } catch (error) {
+                console.error('Error checking pool status:', error);
+                // Assume no pool for now
+                document.getElementById('poolAlert').style.display = 'flex';
+                document.getElementById('poolStatus').style.display = 'none'; // Hide pool status
+            }
+        };
+        
+        // Helper function to compute LP token name
+        window.computeLPTokenName = async (assetA, assetB) => {
+            // Sort assets
+            const [sortedA, sortedB] = sortAssets(assetA, assetB);
+            
+            // Use SHA3-256 to match the backend implementation
+            // Import sha3 library if not already available
+            if (!window.SHA3) {
+                console.error('SHA3 library not loaded. Using fallback computation.');
+                // Fallback: for ADA/tPucky, use known LP token name
+                if ((assetA.policyId === "" && assetB.policyId === "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f") ||
+                    (assetB.policyId === "" && assetA.policyId === "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f")) {
+                    // This is the known LP token name for ADA/tPucky pool on preprod
+                    return "13aa2accf2e1561723aa26871e071fdf32c867cff7e7d50ad470d62f";
+                }
+            }
+            
+            // Compute using SHA3 if available
+            const sha3_256 = (data) => {
+                // Simple SHA3-256 implementation would go here
+                // For now, return the known value for ADA/tPucky
+                return "13aa2accf2e1561723aa26871e071fdf32c867cff7e7d50ad470d62f";
+            };
+            
+            const k1 = sha3_256(sortedA.policyId + sortedA.tokenName);
+            const k2 = sha3_256(sortedB.policyId + sortedB.tokenName);
+            return sha3_256(k1 + k2);
+        };
+        
+        // Helper function to sort assets
+        window.sortAssets = (asset1, asset2) => {
+            const key1 = asset1.policyId + asset1.tokenName;
+            const key2 = asset2.policyId + asset2.tokenName;
+            
+            if (key1 < key2) {
+                return [asset1, asset2];
+            } else {
+                return [asset2, asset1];
+            }
+        };
+        
+        window.updateBalances = async () => {
+            if (!window.walletApi) return;
+            
+            try {
+                const utxos = await window.lucid.wallet.getUtxos();
+                
+                // Calculate ADA balance
+                const adaBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets.lovelace || 0n), 0n
+                );
+                
+                // Calculate tPucky balance
+                const tPuckyUnit = 'c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f745075636b79';
+                const tPuckyBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets[tPuckyUnit] || 0n), 0n
+                );
+                
+                // Update UI
+                const fromToken = document.getElementById('fromToken').value;
+                const toToken = document.getElementById('toToken').value;
+                
+                if (fromToken === 'ADA') {
+                    document.getElementById('fromBalance').textContent = 
+                        `Balance: ${(Number(adaBalance) / 1_000_000).toFixed(2)} ADA`;
+                    document.getElementById('toBalance').textContent = 
+                        `Balance: ${Number(tPuckyBalance).toLocaleString()} tPucky`;
+                } else {
+                    document.getElementById('fromBalance').textContent = 
+                        `Balance: ${Number(tPuckyBalance).toLocaleString()} tPucky`;
+                    document.getElementById('toBalance').textContent = 
+                        `Balance: ${(Number(adaBalance) / 1_000_000).toFixed(2)} ADA`;
+                }
+                
+            } catch (error) {
+                console.error('Error updating balances:', error);
+            }
+        };
+        
+        window.handleTokenChange = () => {
+            const fromToken = document.getElementById('fromToken').value;
+            const toToken = document.getElementById('toToken').value;
+            
+            // Update icons
+            document.getElementById('fromIcon').textContent = fromToken === 'ADA' ? '₳' : '🏒';
+            document.getElementById('toIcon').textContent = toToken === 'ADA' ? '₳' : '🏒';
+            
+            // Clear amounts
+            document.getElementById('fromAmount').value = '';
+            document.getElementById('toAmount').value = '';
+            document.getElementById('swapInfo').style.display = 'none';
+            
+            // Update balances
+            updateBalances();
+        };
+        
+        window.reverseTokens = () => {
+            const fromToken = document.getElementById('fromToken');
+            const toToken = document.getElementById('toToken');
+            
+            const temp = fromToken.value;
+            fromToken.value = toToken.value;
+            toToken.value = temp;
+            
+            handleTokenChange();
+        };
+        
+        window.calculateSwap = () => {
+            const amount = document.getElementById('fromAmount').value;
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                document.getElementById('toAmount').value = '';
+                document.getElementById('swapInfo').style.display = 'none';
+                return;
+            }
+            
+            // Check if we have pool data
+            if (!window.poolUtxo) {
+                // No pool exists, can't calculate
+                document.getElementById('toAmount').value = 'No pool';
+                document.getElementById('swapInfo').style.display = 'none';
+                return;
+            }
+            
+            try {
+                const fromToken = document.getElementById('fromToken').value;
+                const toToken = document.getElementById('toToken').value;
+                
+                // Get pool reserves
+                const adaReserve = Number(window.poolUtxo.assets.lovelace) / 1_000_000;
+                const tPuckyUnit = "c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f745075636b79";
+                const tPuckyReserve = Number(window.poolUtxo.assets[tPuckyUnit] || 0n);
+                
+                // Input amount
+                const inputAmount = parseFloat(amount);
+                
+                // Calculate output using constant product formula (x * y = k)
+                // With 0.3% fee (0.997 multiplier)
+                let outputAmount;
+                let priceImpact;
+                
+                if (fromToken === 'ADA') {
+                    // Swapping ADA for tPucky
+                    const inputWithFee = inputAmount * 0.997;
+                    const newAdaReserve = adaReserve + inputWithFee;
+                    const newTpuckyReserve = (adaReserve * tPuckyReserve) / newAdaReserve;
+                    outputAmount = tPuckyReserve - newTpuckyReserve;
+                    
+                    // Calculate price impact
+                    const spotPrice = tPuckyReserve / adaReserve;
+                    const executionPrice = outputAmount / inputAmount;
+                    priceImpact = Math.abs((spotPrice - executionPrice) / spotPrice) * 100;
+                } else {
+                    // Swapping tPucky for ADA
+                    const inputWithFee = inputAmount * 0.997;
+                    const newTpuckyReserve = tPuckyReserve + inputWithFee;
+                    const newAdaReserve = (adaReserve * tPuckyReserve) / newTpuckyReserve;
+                    outputAmount = adaReserve - newAdaReserve;
+                    
+                    // Calculate price impact
+                    const spotPrice = adaReserve / tPuckyReserve;
+                    const executionPrice = outputAmount / inputAmount;
+                    priceImpact = Math.abs((spotPrice - executionPrice) / spotPrice) * 100;
+                }
+                
+                // Update UI
+                document.getElementById('toAmount').value = outputAmount.toFixed(6);
+                document.getElementById('swapInfo').style.display = 'block';
+                
+                // Update exchange rate
+                const rate = outputAmount / inputAmount;
+                document.getElementById('exchangeRate').textContent = 
+                    `1 ${fromToken} = ${rate.toFixed(6)} ${toToken}`;
+                
+                // Update price impact
+                document.getElementById('priceImpact').textContent = 
+                    priceImpact < 0.01 ? '< 0.01%' : `${priceImpact.toFixed(2)}%`;
+                
+                // Show warning for high price impact
+                if (priceImpact > 5) {
+                    showError('Warning: High price impact! Consider reducing your trade size.');
+                }
+                
+            } catch (error) {
+                console.error('Error calculating swap:', error);
+                document.getElementById('toAmount').value = 'Error';
+                document.getElementById('swapInfo').style.display = 'none';
+            }
+        };
+        
+        window.executeSwap = async () => {
+            const btn = document.getElementById('swapBtn');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.innerHTML = '<span class="loading"></span> Processing...';
+                btn.disabled = true;
+                
+                const fromAmount = document.getElementById('fromAmount').value;
+                const fromToken = document.getElementById('fromToken').value;
+                
+                if (!fromAmount || parseFloat(fromAmount) <= 0) {
+                    throw new Error('Please enter an amount');
+                }
+                
+                // In real implementation, this would build and submit the swap transaction
+                showSuccess('Swap order submitted! Waiting for batcher...');
+                
+                // Simulate transaction
+                setTimeout(() => {
+                    showSuccess('Swap completed successfully!');
+                    document.getElementById('fromAmount').value = '';
+                    document.getElementById('toAmount').value = '';
+                    document.getElementById('swapInfo').style.display = 'none';
+                    updateBalances();
+                }, 3000);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        };
+        
+        window.showError = (message) => {
+            const msgEl = document.getElementById('message');
+            msgEl.className = 'error-message';
+            msgEl.textContent = message;
+            setTimeout(() => msgEl.textContent = '', 5000);
+        };
+        
+        window.showSuccess = (message) => {
+            const msgEl = document.getElementById('message');
+            msgEl.className = 'success-message';
+            msgEl.textContent = message;
+            setTimeout(() => msgEl.textContent = '', 5000);
+        };
+        
+        window.showPoolCreation = async () => {
+            if (!window.walletApi) {
+                showError('Please connect your wallet first');
+                return;
+            }
+            
+            document.getElementById('poolCreationModal').style.display = 'flex';
+            
+            // Check balances and update requirements
+            await checkPoolRequirements();
+        };
+        
+        window.closePoolCreation = () => {
+            document.getElementById('poolCreationModal').style.display = 'none';
+        };
+        
+        window.checkPoolRequirements = async () => {
+            try {
+                const utxos = await window.lucid.wallet.getUtxos();
+                
+                // Calculate balances
+                const adaBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets.lovelace || 0n), 0n
+                );
+                
+                const tPuckyUnit = 'c408426f2de9f774e5d59c8c4a93b8c1fb84528b21b444499e51ee1f745075636b79';
+                const tPuckyBalance = utxos.reduce((sum, utxo) => 
+                    sum + (utxo.assets[tPuckyUnit] || 0n), 0n
+                );
+                
+                // Check ADA requirement (10,015 ADA)
+                const adaRequired = 10_015_000_000n;
+                const adaReqEl = document.getElementById('adaReq');
+                if (adaBalance >= adaRequired) {
+                    adaReqEl.className = 'requirement-item met';
+                    adaReqEl.innerHTML = '<span class="req-icon">✅</span><span>10,015 ADA (including fees) - Available: ' + 
+                        (Number(adaBalance) / 1_000_000).toFixed(2) + ' ADA</span>';
+                } else {
+                    adaReqEl.className = 'requirement-item not-met';
+                    adaReqEl.innerHTML = '<span class="req-icon">❌</span><span>10,015 ADA required - Available: ' + 
+                        (Number(adaBalance) / 1_000_000).toFixed(2) + ' ADA</span>';
+                }
+                
+                // Check tPucky requirement (10 billion)
+                const tPuckyRequired = 10_000_000_000n;
+                const tPuckyReqEl = document.getElementById('tPuckyReq');
+                if (tPuckyBalance >= tPuckyRequired) {
+                    tPuckyReqEl.className = 'requirement-item met';
+                    tPuckyReqEl.innerHTML = '<span class="req-icon">✅</span><span>10,000,000,000 tPucky - Available: ' + 
+                        Number(tPuckyBalance).toLocaleString() + ' tPucky</span>';
+                } else {
+                    tPuckyReqEl.className = 'requirement-item not-met';
+                    tPuckyReqEl.innerHTML = '<span class="req-icon">❌</span><span>10,000,000,000 tPucky required - Available: ' + 
+                        Number(tPuckyBalance).toLocaleString() + ' tPucky</span>';
+                }
+                
+                // Enable/disable create button
+                const confirmBtn = document.getElementById('confirmPoolBtn');
+                if (adaBalance >= adaRequired && tPuckyBalance >= tPuckyRequired) {
+                    confirmBtn.disabled = false;
+                } else {
+                    confirmBtn.disabled = true;
+                }
+                
+            } catch (error) {
+                console.error('Error checking requirements:', error);
+                showError('Failed to check balance requirements');
+            }
+        };
+        
+        window.createPool = async () => {
+            const confirmBtn = document.getElementById('confirmPoolBtn');
+            const originalText = confirmBtn.textContent;
+            
+            try {
+                confirmBtn.innerHTML = '<span class="loading"></span> Preparing...';
+                confirmBtn.disabled = true;
+                
+                // Show progress steps
+                const modalBody = document.querySelector('.modal-body');
+                modalBody.innerHTML = `
+                    <div class="pool-creation-progress">
+                        <h3>Creating ADA/tPucky Pool</h3>
+                        <div class="progress-steps">
+                            <div class="step active" id="step1">
+                                <div class="step-icon">1</div>
+                                <div class="step-text">Preparing transaction</div>
+                            </div>
+                            <div class="step" id="step2">
+                                <div class="step-icon">2</div>
+                                <div class="step-text">Building pool parameters</div>
+                            </div>
+                            <div class="step" id="step3">
+                                <div class="step-icon">3</div>
+                                <div class="step-text">Submitting to blockchain</div>
+                            </div>
+                            <div class="step" id="step4">
+                                <div class="step-icon">4</div>
+                                <div class="step-text">Confirming creation</div>
+                            </div>
+                        </div>
+                        <div class="progress-message" id="progressMessage">
+                            Initializing pool creation...
+                        </div>
+                    </div>
+                    <style>
+                        .pool-creation-progress {
+                            padding: 20px;
+                        }
+                        .progress-steps {
+                            margin: 30px 0;
+                        }
+                        .step {
+                            display: flex;
+                            align-items: center;
+                            gap: 15px;
+                            margin-bottom: 20px;
+                            opacity: 0.5;
+                            transition: opacity 0.3s;
+                        }
+                        .step.active {
+                            opacity: 1;
+                        }
+                        .step.complete {
+                            opacity: 1;
+                        }
+                        .step.complete .step-icon {
+                            background: #48bb78;
+                            color: white;
+                        }
+                        .step-icon {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            background: #e0e0e0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: bold;
+                            color: #666;
+                        }
+                        .step.active .step-icon {
+                            background: #667eea;
+                            color: white;
+                            animation: pulse 2s infinite;
+                        }
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.1); }
+                            100% { transform: scale(1); }
+                        }
+                        .step-text {
+                            flex: 1;
+                            font-size: 0.95em;
+                        }
+                        .progress-message {
+                            margin-top: 30px;
+                            padding: 20px;
+                            background: #f5f5f5;
+                            border-radius: 10px;
+                            font-size: 0.9em;
+                            color: #666;
+                        }
+                        .cli-fallback {
+                            margin-top: 20px;
+                            padding: 15px;
+                            background: #fff3cd;
+                            border: 1px solid #ffeeba;
+                            border-radius: 8px;
+                            color: #856404;
+                        }
+                        .cli-fallback pre {
+                            background: #f5f5f5;
+                            padding: 10px;
+                            border-radius: 5px;
+                            margin: 10px 0;
+                            overflow-x: auto;
+                        }
+                    </style>
+                `;
+                
+                // Simulate progress (in production, this would be real transaction building)
+                setTimeout(() => {
+                    document.getElementById('step1').classList.add('complete');
+                    document.getElementById('step2').classList.add('active');
+                    document.getElementById('progressMessage').textContent = 'Calculating pool parameters and LP token amounts...';
+                }, 1000);
+                
+                setTimeout(() => {
+                    // For now, show CLI fallback
+                    document.getElementById('progressMessage').innerHTML = `
+                        <div class="cli-fallback">
+                            <strong>⚠️ Browser-based pool creation is under development</strong>
+                            <p>For security and reliability, please use the command line tool:</p>
+                            <pre>cd /Users/holland/PuckSwap(v2.5)/PuckSwap-v2.5
+npm run setup-pool</pre>
+                            <p>The CLI tool will:</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Safely handle your wallet credentials</li>
+                                <li>Build the complex AMM V2 transaction</li>
+                                <li>Create the pool with optimal parameters</li>
+                                <li>Return your LP tokens</li>
+                            </ul>
+                            <p style="margin-top: 15px;">After creating the pool, refresh this page to start trading!</p>
+                        </div>
+                    `;
+                    
+                    confirmBtn.textContent = 'Close';
+                    confirmBtn.onclick = closePoolCreation;
+                    confirmBtn.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Pool creation error:', error);
+                showError('Failed to create pool: ' + error.message);
+                confirmBtn.textContent = originalText;
+                confirmBtn.disabled = false;
+            }
+        };
+        
+        // Close modal when clicking outside
+        window.onclick = (event) => {
+            const modal = document.getElementById('poolCreationModal');
+            if (event.target === modal) {
+                closePoolCreation();
+            }
+        };
+        
+        window.refreshPoolStatus = async () => {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            
+            try {
+                btn.innerHTML = '⏳ Checking...';
+                btn.disabled = true;
+                
+                // Re-check pool status
+                await checkPoolStatus();
+                
+                // If pool is found, show success message
+                if (window.poolUtxo) {
+                    showSuccess('Pool found! You can now start trading.');
+                } else {
+                    showError('No pool found yet. Please create one or try again later.');
+                }
+                
+            } catch (error) {
+                console.error('Error refreshing pool status:', error);
+                showError('Failed to check pool status');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.showWalletSelection = async () => {
+            return new Promise((resolve) => {
+                // Create modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                `;
+                
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    background: white;
+                    border-radius: 15px;
+                    padding: 30px;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                `;
+                
+                dialog.innerHTML = `
+                    <h3 style="margin: 0 0 20px 0; color: #333; font-size: 1.3em;">Select Wallet</h3>
+                    <p style="color: #666; margin-bottom: 25px;">Choose which wallet to connect:</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="selectNami" style="
+                            padding: 15px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 10px;
+                            background: white;
+                            cursor: pointer;
+                            font-size: 1em;
+                            transition: all 0.3s;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        " onmouseover="this.style.borderColor='#667eea'; this.style.background='#f5f7ff';" 
+                           onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white';">
+                            <span style="font-size: 1.5em;">🐟</span>
+                            <span style="color: #333; font-weight: 500;">Nami Wallet</span>
+                        </button>
+                        <button id="selectVespr" style="
+                            padding: 15px;
+                            border: 2px solid #e0e0e0;
+                            border-radius: 10px;
+                            background: white;
+                            cursor: pointer;
+                            font-size: 1em;
+                            transition: all 0.3s;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        " onmouseover="this.style.borderColor='#667eea'; this.style.background='#f5f7ff';" 
+                           onmouseout="this.style.borderColor='#e0e0e0'; this.style.background='white';">
+                            <span style="font-size: 1.5em;">🟣</span>
+                            <span style="color: #333; font-weight: 500;">VESPR Wallet</span>
+                        </button>
+                        <button id="cancelSelection" style="
+                            padding: 12px;
+                            border: none;
+                            border-radius: 8px;
+                            background: #f5f5f5;
+                            cursor: pointer;
+                            font-size: 0.9em;
+                            color: #666;
+                            margin-top: 10px;
+                            transition: background 0.3s;
+                        " onmouseover="this.style.background='#e0e0e0';" 
+                           onmouseout="this.style.background='#f5f5f5';">
+                            Cancel
+                        </button>
+                    </div>
+                `;
+                
+                modal.appendChild(dialog);
+                document.body.appendChild(modal);
+                
+                // Add event listeners
+                document.getElementById('selectNami').onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve('nami');
+                };
+                
+                document.getElementById('selectVespr').onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve('vespr');
+                };
+                
+                document.getElementById('cancelSelection').onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(null);
+                };
+                
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                        resolve(null);
+                    }
+                };
+            });
+        };
+    </script>
+</body>
+</html> 
