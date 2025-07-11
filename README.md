@@ -2,6 +2,31 @@
 
 PuckSwap is an experimental Automated Market Maker (AMM) decentralized exchange (DEX) built on the Cardano blockchain, designed to enhance the image. Augmented with AI, this platform enables seamless token swaps on the Cardano preprod testnet.
 
+## 🧬 Forked from Minswap
+
+This project is a fork of [Minswap](https://github.com/minswap/minswap-dex-v2), a decentralized exchange (DEX) built on the Cardano blockchain.
+
+### ⚠️ Disclaimer
+
+> This codebase is based on the open-source Minswap DEX. All rights and credits for the original implementation go to the Minswap team.  
+> This project is **not affiliated with, endorsed by, or maintained by Minswap**.
+
+---
+
+## 🛠️ Modifications in This Fork
+
+- Supports swaps between **ADA** and **tPucky** only
+- Customized UI and branding for **PuckSwap DEX**
+- Configured for **Cardano Preprod Testnet** only
+- Modified logic to explore **batcher-less operation**
+
+---
+
+## 🪪 License
+
+This project retains the original license of Minswap: **GNU General Public License v3.0 (GPL-3.0)**.  
+All modifications specific to this fork are documented in [`CHANGES.md`](./CHANGES.md).
+
 ## Project Overview
 
 PuckSwap leverages audited AMM V2 smart contracts to provide a secure and efficient trading experience. The platform features a unique retro-inspired terminal interface with Windows 98 aesthetics, combining nostalgic design with modern blockchain technology.
@@ -140,8 +165,7 @@ We welcome contributions! Please ensure:
 
 ## License
 
-This project is licensed under the 
- License - see LICENSE.md for details.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0) - see [LICENSE.md](LICENSE.md) for details.
 
 ## Disclaimer
 
