@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "cd PuckSwap-v2.5/puckswap && npm run serve",
     "setup-pool": "cd PuckSwap-v2.5/puckswap && npm run setup-pool",
-    "dev": "cd PuckSwap-v2.5/puckswap && npm run serve"
+    "dev": "cd PuckSwap-v2.5/puckswap && npm run serve",
+    "build": "mkdir -p dist && cp -r PuckSwap-v2.5/puckswap/* dist/"
   },
   "keywords": ["cardano", "dex", "puckswap"],
   "author": "",
