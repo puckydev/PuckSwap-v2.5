@@ -1,45 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "echo 'No build needed for static site'",
-  "outputDirectory": ".",
   "routes": [
-    {
-      "src": "/",
-      "dest": "/PuckSwap-v2.5/puckswap/index.html"
-    },
-    {
-      "src": "/pucky.jpg",
-      "dest": "/PuckSwap-v2.5/puckswap/pucky.jpg"
-    },
-    {
-      "src": "/puckyv2.PNG",
-      "dest": "/PuckSwap-v2.5/puckswap/puckyv2.PNG"
-    },
-    {
-      "src": "/happypuckv2.PNG",
-      "dest": "/PuckSwap-v2.5/puckswap/happypuckv2.PNG"
-    },
-    {
-      "src": "/censor-beep.mp3",
-      "dest": "/PuckSwap-v2.5/puckswap/censor-beep.mp3"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|mp3|woff|woff2|ttf))",
-      "dest": "/PuckSwap-v2.5/puckswap/$1"
-    },
-    {
-      "src": "/src/(.*)",
-      "dest": "/PuckSwap-v2.5/src/$1"
-    },
-    {
-      "src": "/build/(.*)",
-      "dest": "/PuckSwap-v2.5/build/$1"
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/PuckSwap-v2.5/puckswap/index.html"
-    }
+    { "src": "/", "dest": "/PuckSwap-v2.5/puckswap/index.html" },
+    { "src": "/pucky.jpg", "dest": "/PuckSwap-v2.5/puckswap/pucky.jpg" },
+    { "src": "/puckyv2.PNG", "dest": "/PuckSwap-v2.5/puckswap/puckyv2.PNG" },
+    { "src": "/happypuckv2.PNG", "dest": "/PuckSwap-v2.5/puckswap/happypuckv2.PNG" },
+    { "src": "/censor-beep.mp3", "dest": "/PuckSwap-v2.5/puckswap/censor-beep.mp3" },
+    { "src": "/Wallets/(.*)", "dest": "/PuckSwap-v2.5/puckswap/Wallets/$1" },
+    { "src": "/(.*)", "dest": "/PuckSwap-v2.5/puckswap/$1" }
   ]
 } 
